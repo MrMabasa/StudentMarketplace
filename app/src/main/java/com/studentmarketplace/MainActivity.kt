@@ -1,7 +1,11 @@
 package com.studentmarketplace
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,7 +51,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,7 +71,8 @@ data class Listing(
     val condition: String,
     val category: String,
     val description: String,
-    val imageRes: Int? = null
+    val imageRes: Int? = null,
+    val imageUri: String? = null
 )
 
 val listings = mutableStateListOf(
@@ -312,6 +319,32 @@ fun CreateListingScreen(navController: NavController) {
         mutableStateOf("")
     }
 
+    var selectedImageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        selectedImageUri = uri
+
+        if (uri != null) {
+            errorMessage = ""
+        }
+    }
+
+    val selectedBitmap = remember(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            context.contentResolver
+                .openInputStream(uri)
+                ?.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)
+                }
+        }
+    }
+
     val categories = listOf(
         "Textbooks and Study Material",
         "Electronics and Accessories",
@@ -351,6 +384,44 @@ fun CreateListingScreen(navController: NavController) {
                 text = "Add an item that you would like to sell.",
                 style = MaterialTheme.typography.bodyLarge
             )
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            Button(
+                onClick = {
+                    photoPickerLauncher.launch("image/*")
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (selectedImageUri == null) {
+                        "Select Photo"
+                    } else {
+                        "Change Photo"
+                    }
+                )
+            }
+
+            if (selectedBitmap != null) {
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
+                Image(
+                    bitmap = selectedBitmap.asImageBitmap(),
+                    contentDescription = "Selected listing photo",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(
+                            RoundedCornerShape(16.dp)
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Spacer(
                 modifier = Modifier.height(20.dp)
@@ -540,6 +611,10 @@ fun CreateListingScreen(navController: NavController) {
                             errorMessage = "Please select a category."
                         }
 
+                        selectedImageUri == null -> {
+                            errorMessage = "Please select a photo."
+                        }
+
                         condition.isBlank() -> {
                             errorMessage = "Please select a condition."
                         }
@@ -560,7 +635,8 @@ fun CreateListingScreen(navController: NavController) {
                                     condition = condition,
                                     category = category,
                                     description = description.trim(),
-                                    imageRes = null
+                                    imageRes = null,
+                                    imageUri = selectedImageUri?.toString()
                                 )
                             )
 
@@ -750,6 +826,20 @@ fun ListingCard(
     onClick: () -> Unit
 ) {
 
+    val context = LocalContext.current
+
+    val listingBitmap = remember(listing.imageUri) {
+        listing.imageUri?.let { uriString ->
+            runCatching {
+                context.contentResolver
+                    .openInputStream(Uri.parse(uriString))
+                    ?.use { inputStream ->
+                        BitmapFactory.decodeStream(inputStream)
+                    }
+            }.getOrNull()
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -774,6 +864,19 @@ fun ListingCard(
                     painter = painterResource(
                         id = listing.imageRes
                     ),
+                    contentDescription = listing.title,
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(
+                            RoundedCornerShape(12.dp)
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+
+            } else if (listingBitmap != null) {
+
+                Image(
+                    bitmap = listingBitmap.asImageBitmap(),
                     contentDescription = listing.title,
                     modifier = Modifier
                         .size(110.dp)
@@ -885,6 +988,20 @@ fun ListingDetailsScreen(
     listing: Listing
 ) {
 
+    val context = LocalContext.current
+
+    val listingBitmap = remember(listing.imageUri) {
+        listing.imageUri?.let { uriString ->
+            runCatching {
+                context.contentResolver
+                    .openInputStream(Uri.parse(uriString))
+                    ?.use { inputStream ->
+                        BitmapFactory.decodeStream(inputStream)
+                    }
+            }.getOrNull()
+        }
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -909,6 +1026,20 @@ fun ListingDetailsScreen(
                         painter = painterResource(
                             id = listing.imageRes
                         ),
+                        contentDescription = listing.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp)
+                            .clip(
+                                RoundedCornerShape(16.dp)
+                            ),
+                        contentScale = ContentScale.Crop
+                    )
+
+                } else if (listingBitmap != null) {
+
+                    Image(
+                        bitmap = listingBitmap.asImageBitmap(),
                         contentDescription = listing.title,
                         modifier = Modifier
                             .fillMaxWidth()
