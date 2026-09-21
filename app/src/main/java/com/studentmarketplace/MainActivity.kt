@@ -40,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -64,10 +65,10 @@ data class Listing(
     val condition: String,
     val category: String,
     val description: String,
-    val imageRes: Int
+    val imageRes: Int? = null
 )
 
-val listings = listOf(
+val listings = mutableStateListOf(
 
     Listing(
         id = 1,
@@ -185,6 +186,10 @@ fun StudentMarketplaceApp() {
             BrowseListingsScreen(navController)
         }
 
+        composable("createListing") {
+            CreateListingScreen(navController)
+        }
+
         composable("listing/{listingId}") { backStackEntry ->
 
             val listingId =
@@ -266,12 +271,328 @@ fun HomeScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    // Create Listing will be implemented later.
+                    navController.navigate("createListing")
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Create Listing")
             }
+        }
+    }
+}
+
+@Composable
+fun CreateListingScreen(navController: NavController) {
+
+    var title by remember {
+        mutableStateOf("")
+    }
+
+    var moduleCode by remember {
+        mutableStateOf("")
+    }
+
+    var description by remember {
+        mutableStateOf("")
+    }
+
+    var price by remember {
+        mutableStateOf("")
+    }
+
+    var category by remember {
+        mutableStateOf("")
+    }
+
+    var condition by remember {
+        mutableStateOf("")
+    }
+
+    var errorMessage by remember {
+        mutableStateOf("")
+    }
+
+    val categories = listOf(
+        "Textbooks and Study Material",
+        "Electronics and Accessories",
+        "Stationery and Course Equipment",
+        "Dorm and Daily Essentials",
+        "Other Student Items"
+    )
+
+    val conditions = listOf(
+        "New",
+        "Like New",
+        "Very Good",
+        "Good",
+        "Fair"
+    )
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
+        contentPadding = PaddingValues(20.dp)
+    ) {
+
+        item {
+
+            Text(
+                text = "Create Listing",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "Add an item that you would like to sell.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    errorMessage = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Title")
+                },
+                placeholder = {
+                    Text("e.g. Calculus Textbook")
+                },
+                singleLine = true
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            OutlinedTextField(
+                value = moduleCode,
+                onValueChange = {
+                    moduleCode = it
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Module Code (Optional)")
+                },
+                placeholder = {
+                    Text("e.g. MATH6112")
+                },
+                singleLine = true
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = {
+                    description = it
+                    errorMessage = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Description")
+                },
+                placeholder = {
+                    Text("Describe the item...")
+                },
+                minLines = 4
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            OutlinedTextField(
+                value = price,
+                onValueChange = {
+                    price = it
+                    errorMessage = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Price")
+                },
+                placeholder = {
+                    Text("e.g. 500")
+                },
+                singleLine = true
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Text(
+                text = "Category",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            categories.forEach { item ->
+
+                Button(
+                    onClick = {
+                        category = item
+                        errorMessage = ""
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                ) {
+                    Text(
+                        text = if (category == item) {
+                            "✓ $item"
+                        } else {
+                            item
+                        }
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "Condition",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            conditions.forEach { item ->
+
+                Button(
+                    onClick = {
+                        condition = item
+                        errorMessage = ""
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                ) {
+                    Text(
+                        text = if (condition == item) {
+                            "✓ $item"
+                        } else {
+                            item
+                        }
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            if (errorMessage.isNotEmpty()) {
+
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
+
+            Button(
+                onClick = {
+
+                    when {
+                        title.isBlank() -> {
+                            errorMessage = "Please enter a listing title."
+                        }
+
+                        description.isBlank() -> {
+                            errorMessage = "Please enter a description."
+                        }
+
+                        price.isBlank() -> {
+                            errorMessage = "Please enter a price."
+                        }
+
+                        price.toDoubleOrNull() == null -> {
+                            errorMessage = "Please enter a valid price."
+                        }
+
+                        category.isBlank() -> {
+                            errorMessage = "Please select a category."
+                        }
+
+                        condition.isBlank() -> {
+                            errorMessage = "Please select a condition."
+                        }
+
+                        else -> {
+
+                            val newId =
+                                (listings.maxOfOrNull { it.id } ?: 0) + 1
+
+                            listings.add(
+                                Listing(
+                                    id = newId,
+                                    title = title.trim(),
+                                    moduleCode = moduleCode
+                                        .trim()
+                                        .ifBlank { null },
+                                    price = "R${price.trim()}",
+                                    condition = condition,
+                                    category = category,
+                                    description = description.trim(),
+                                    imageRes = null
+                                )
+                            )
+
+                            navController.navigate("browse") {
+                                popUpTo("createListing") {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Save Listing")
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Button(
+                onClick = {
+                    navController.popBackStack()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancel")
+            }
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
         }
     }
 }
@@ -447,18 +768,42 @@ fun ListingCard(
                 .padding(12.dp)
         ) {
 
-            Image(
-                painter = painterResource(
-                    id = listing.imageRes
-                ),
-                contentDescription = listing.title,
-                modifier = Modifier
-                    .size(110.dp)
-                    .clip(
-                        RoundedCornerShape(12.dp)
+            if (listing.imageRes != null) {
+
+                Image(
+                    painter = painterResource(
+                        id = listing.imageRes
                     ),
-                contentScale = ContentScale.Crop
-            )
+                    contentDescription = listing.title,
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(
+                            RoundedCornerShape(12.dp)
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+
+            } else {
+
+                Box(
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(
+                            RoundedCornerShape(12.dp)
+                        )
+                        .background(
+                            MaterialTheme.colorScheme
+                                .secondaryContainer
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "No Photo",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
 
             Spacer(
                 modifier = Modifier.width(14.dp)
@@ -558,19 +903,41 @@ fun ListingDetailsScreen(
 
             item {
 
-                Image(
-                    painter = painterResource(
-                        id = listing.imageRes
-                    ),
-                    contentDescription = listing.title,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(280.dp)
-                        .clip(
-                            RoundedCornerShape(16.dp)
+                if (listing.imageRes != null) {
+
+                    Image(
+                        painter = painterResource(
+                            id = listing.imageRes
                         ),
-                    contentScale = ContentScale.Crop
-                )
+                        contentDescription = listing.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp)
+                            .clip(
+                                RoundedCornerShape(16.dp)
+                            ),
+                        contentScale = ContentScale.Crop
+                    )
+
+                } else {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp)
+                            .clip(
+                                RoundedCornerShape(16.dp)
+                            )
+                            .background(
+                                MaterialTheme.colorScheme
+                                    .secondaryContainer
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Text("No Photo")
+                    }
+                }
 
                 Spacer(
                     modifier = Modifier.height(20.dp)
