@@ -63,6 +63,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.studentmarketplace.ui.theme.StudentMarketplaceTheme
 
+
+// Represents an item listed for sale in the marketplace.
 data class Listing(
     val id: Int,
     val title: String,
@@ -75,6 +77,16 @@ data class Listing(
     val imageUri: String? = null
 )
 
+// Represents a buyer's request to purchase a listing.
+data class BuyerRequest(
+    val id: Int,
+    val listingId: Int,
+    val buyerName: String,
+    val status: String = "Pending"
+)
+
+
+// Local marketplace listing data used by the current prototype.
 val listings = mutableStateListOf(
 
     Listing(
@@ -162,11 +174,14 @@ val listings = mutableStateListOf(
     )
 )
 
+
+// Main Android activity and application entry point.
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Start the Jetpack Compose application.
         setContent {
             StudentMarketplaceTheme {
                 StudentMarketplaceApp()
@@ -175,28 +190,35 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+// Main application navigation.
 @Composable
 fun StudentMarketplaceApp() {
 
     val navController = rememberNavController()
 
+    // Define the application's available screens/routes.
     NavHost(
         navController = navController,
         startDestination = "home"
     ) {
 
+        // Home screen.
         composable("home") {
             HomeScreen(navController)
         }
 
+        // Browse marketplace listings.
         composable("browse") {
             BrowseListingsScreen(navController)
         }
 
+        // Create a new marketplace listing.
         composable("createListing") {
             CreateListingScreen(navController)
         }
 
+        // Display details for a selected listing.
         composable("listing/{listingId}") { backStackEntry ->
 
             val listingId =
@@ -217,12 +239,15 @@ fun StudentMarketplaceApp() {
             }
         }
 
+        // Profile and account area.
         composable("profile") {
             ProfileScreen(navController)
         }
     }
 }
 
+
+// Home screen - provides the main marketplace actions.
 @Composable
 fun HomeScreen(navController: NavController) {
 
@@ -263,6 +288,7 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier.height(32.dp)
             )
 
+            // Navigate to the marketplace listings.
             Button(
                 onClick = {
                     navController.navigate("browse")
@@ -276,6 +302,7 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Navigate to the create-listing form.
             Button(
                 onClick = {
                     navController.navigate("createListing")
@@ -288,6 +315,8 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+
+// Create Listing screen - allows a student to create a listing.
 @Composable
 fun CreateListingScreen(navController: NavController) {
 
@@ -319,12 +348,14 @@ fun CreateListingScreen(navController: NavController) {
         mutableStateOf("")
     }
 
+    // Stores the photo selected by the user.
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
 
     val context = LocalContext.current
 
+    // Opens the device image picker.
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -335,6 +366,7 @@ fun CreateListingScreen(navController: NavController) {
         }
     }
 
+    // Loads the selected image so it can be previewed.
     val selectedBitmap = remember(selectedImageUri) {
         selectedImageUri?.let { uri ->
             context.contentResolver
@@ -345,6 +377,7 @@ fun CreateListingScreen(navController: NavController) {
         }
     }
 
+    // Available marketplace categories.
     val categories = listOf(
         "Textbooks and Study Material",
         "Electronics and Accessories",
@@ -353,6 +386,7 @@ fun CreateListingScreen(navController: NavController) {
         "Other Student Items"
     )
 
+    // Available item conditions.
     val conditions = listOf(
         "New",
         "Like New",
@@ -389,6 +423,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(20.dp)
             )
 
+            // Allow the user to select or replace the listing photo.
             Button(
                 onClick = {
                     photoPickerLauncher.launch("image/*")
@@ -404,6 +439,7 @@ fun CreateListingScreen(navController: NavController) {
                 )
             }
 
+            // Show a preview of the selected photo.
             if (selectedBitmap != null) {
 
                 Spacer(
@@ -427,6 +463,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(20.dp)
             )
 
+            // Listing title.
             OutlinedTextField(
                 value = title,
                 onValueChange = {
@@ -447,6 +484,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Optional module code.
             OutlinedTextField(
                 value = moduleCode,
                 onValueChange = {
@@ -466,6 +504,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Listing description.
             OutlinedTextField(
                 value = description,
                 onValueChange = {
@@ -486,6 +525,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Listing price.
             OutlinedTextField(
                 value = price,
                 onValueChange = {
@@ -515,6 +555,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(6.dp)
             )
 
+            // Category selection buttons.
             categories.forEach { item ->
 
                 Button(
@@ -549,6 +590,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(6.dp)
             )
 
+            // Condition selection buttons.
             conditions.forEach { item ->
 
                 Button(
@@ -574,6 +616,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Display validation errors without crashing the app.
             if (errorMessage.isNotEmpty()) {
 
                 Text(
@@ -587,6 +630,7 @@ fun CreateListingScreen(navController: NavController) {
                 )
             }
 
+            // Validate and save the new listing.
             Button(
                 onClick = {
 
@@ -621,9 +665,11 @@ fun CreateListingScreen(navController: NavController) {
 
                         else -> {
 
+                            // Generate the next available local listing ID.
                             val newId =
                                 (listings.maxOfOrNull { it.id } ?: 0) + 1
 
+                            // Add the new listing to the local marketplace list.
                             listings.add(
                                 Listing(
                                     id = newId,
@@ -640,6 +686,7 @@ fun CreateListingScreen(navController: NavController) {
                                 )
                             )
 
+                            // Return to the marketplace after saving.
                             navController.navigate("browse") {
                                 popUpTo("createListing") {
                                     inclusive = true
@@ -657,6 +704,7 @@ fun CreateListingScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Cancel creation and return to the previous screen.
             Button(
                 onClick = {
                     navController.popBackStack()
@@ -673,6 +721,8 @@ fun CreateListingScreen(navController: NavController) {
     }
 }
 
+
+// Browse Listings screen - displays and searches marketplace listings.
 @Composable
 fun BrowseListingsScreen(navController: NavController) {
 
@@ -680,6 +730,7 @@ fun BrowseListingsScreen(navController: NavController) {
         mutableStateOf("")
     }
 
+    // Filter listings based on title, description or module code.
     val filteredListings = listings.filter { listing ->
 
         val query = searchText.trim()
@@ -735,6 +786,7 @@ fun BrowseListingsScreen(navController: NavController) {
                 modifier = Modifier.height(12.dp)
             )
 
+            // Search field for finding marketplace listings.
             OutlinedTextField(
                 value = searchText,
                 onValueChange = {
@@ -775,6 +827,7 @@ fun BrowseListingsScreen(navController: NavController) {
                 modifier = Modifier.height(16.dp)
             )
 
+            // Show a message when the search has no results.
             if (filteredListings.isEmpty()) {
 
                 Box(
@@ -790,6 +843,7 @@ fun BrowseListingsScreen(navController: NavController) {
 
             } else {
 
+                // Display the filtered listings.
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
@@ -820,6 +874,8 @@ fun BrowseListingsScreen(navController: NavController) {
     }
 }
 
+
+// Reusable listing card used in the marketplace list.
 @Composable
 fun ListingCard(
     listing: Listing,
@@ -828,6 +884,7 @@ fun ListingCard(
 
     val context = LocalContext.current
 
+    // Load a user-selected listing image when available.
     val listingBitmap = remember(listing.imageUri) {
         listing.imageUri?.let { uriString ->
             runCatching {
@@ -858,6 +915,7 @@ fun ListingCard(
                 .padding(12.dp)
         ) {
 
+            // Display the bundled image first.
             if (listing.imageRes != null) {
 
                 Image(
@@ -873,6 +931,7 @@ fun ListingCard(
                     contentScale = ContentScale.Crop
                 )
 
+                // Display a photo selected by the user.
             } else if (listingBitmap != null) {
 
                 Image(
@@ -886,6 +945,7 @@ fun ListingCard(
                     contentScale = ContentScale.Crop
                 )
 
+                // Fallback when no listing photo is available.
             } else {
 
                 Box(
@@ -982,6 +1042,8 @@ fun ListingCard(
     }
 }
 
+
+// Listing Details screen - displays the full information for a listing.
 @Composable
 fun ListingDetailsScreen(
     navController: NavController,
@@ -990,6 +1052,7 @@ fun ListingDetailsScreen(
 
     val context = LocalContext.current
 
+    // Load a user-selected listing image when available.
     val listingBitmap = remember(listing.imageUri) {
         listing.imageUri?.let { uriString ->
             runCatching {
@@ -1020,6 +1083,7 @@ fun ListingDetailsScreen(
 
             item {
 
+                // Display the listing image.
                 if (listing.imageRes != null) {
 
                     Image(
@@ -1052,6 +1116,7 @@ fun ListingDetailsScreen(
 
                 } else {
 
+                    // Fallback when no image is available.
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1094,6 +1159,7 @@ fun ListingDetailsScreen(
                     modifier = Modifier.height(16.dp)
                 )
 
+                // Show the module code when one was provided.
                 if (listing.moduleCode != null) {
 
                     Text(
@@ -1158,6 +1224,7 @@ fun ListingDetailsScreen(
                     modifier = Modifier.height(28.dp)
                 )
 
+                // Return to the marketplace listings.
                 Button(
                     onClick = {
                         navController.popBackStack()
@@ -1171,6 +1238,8 @@ fun ListingDetailsScreen(
     }
 }
 
+
+// Profile screen - contains the student's account and settings area.
 @Composable
 fun ProfileScreen(navController: NavController) {
 
@@ -1217,6 +1286,8 @@ fun ProfileScreen(navController: NavController) {
     }
 }
 
+
+// Bottom navigation for the main application sections.
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
@@ -1227,6 +1298,7 @@ fun BottomNavigationBar(
         modifier = Modifier.navigationBarsPadding()
     ) {
 
+        // Home navigation item.
         NavigationBarItem(
             selected = selectedRoute == "home",
             onClick = {
@@ -1248,6 +1320,7 @@ fun BottomNavigationBar(
             }
         )
 
+        // Browse navigation item.
         NavigationBarItem(
             selected = selectedRoute == "browse",
             onClick = {
@@ -1266,6 +1339,7 @@ fun BottomNavigationBar(
             }
         )
 
+        // Profile navigation item.
         NavigationBarItem(
             selected = selectedRoute == "profile",
             onClick = {
