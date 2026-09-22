@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -174,6 +175,9 @@ val listings = mutableStateListOf(
     )
 )
 
+// Stores buyer purchase requests for the current prototype.
+val buyerRequests = mutableStateListOf<BuyerRequest>()
+
 
 // Main Android activity and application entry point.
 class MainActivity : ComponentActivity() {
@@ -242,6 +246,11 @@ fun StudentMarketplaceApp() {
         // Profile and account area.
         composable("profile") {
             ProfileScreen(navController)
+        }
+
+        // Seller request screen - displays purchase requests for listings.
+        composable("requests") {
+            BuyerRequestsScreen(navController)
         }
     }
 }
@@ -1224,6 +1233,33 @@ fun ListingDetailsScreen(
                     modifier = Modifier.height(28.dp)
                 )
 
+                // Submit a purchase request for this listing.
+                Button(
+                    onClick = {
+
+                        // Generate the next available request ID.
+                        val newRequestId =
+                            (buyerRequests.maxOfOrNull { it.id } ?: 0) + 1
+
+                        // Add a new pending request for the selected listing.
+                        buyerRequests.add(
+                            BuyerRequest(
+                                id = newRequestId,
+                                listingId = listing.id,
+                                buyerName = "Current Student",
+                                status = "Pending"
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Request to Buy")
+                }
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
                 // Return to the marketplace listings.
                 Button(
                     onClick = {
@@ -1287,6 +1323,168 @@ fun ProfileScreen(navController: NavController) {
 }
 
 
+// Displays purchase requests received by the seller.
+@Composable
+fun BuyerRequestsScreen(navController: NavController) {
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                selectedRoute = "requests"
+            )
+        }
+    ) { paddingValues ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp)
+        ) {
+
+            Text(
+                text = "Buyer Requests",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            if (buyerRequests.isEmpty()) {
+
+                // Show a message when there are no purchase requests.
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "No buyer requests yet.",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+            } else {
+
+                // Display all purchase requests.
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    items(
+                        items = buyerRequests,
+                        key = { it.id }
+                    ) { request ->
+
+                        // Find the listing connected to this request.
+                        val requestedListing =
+                            listings.firstOrNull {
+                                it.id == request.listingId
+                            }
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+
+                                Text(
+                                    text = requestedListing?.title
+                                        ?: "Listing unavailable",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(8.dp)
+                                )
+
+                                Text(
+                                    text = "Buyer: ${request.buyerName}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(4.dp)
+                                )
+
+                                Text(
+                                    text = "Status: ${request.status}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+
+                                // Only show decision buttons while the request is pending.
+                                if (request.status == "Pending") {
+
+                                    Spacer(
+                                        modifier = Modifier.height(12.dp)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+
+                                        // Accept the buyer's request.
+                                        Button(
+                                            onClick = {
+
+                                                val requestIndex =
+                                                    buyerRequests.indexOfFirst {
+                                                        it.id == request.id
+                                                    }
+
+                                                if (requestIndex != -1) {
+                                                    buyerRequests[requestIndex] =
+                                                        request.copy(
+                                                            status = "Accepted"
+                                                        )
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Accept")
+                                        }
+
+                                        // Decline the buyer's request.
+                                        Button(
+                                            onClick = {
+
+                                                val requestIndex =
+                                                    buyerRequests.indexOfFirst {
+                                                        it.id == request.id
+                                                    }
+
+                                                if (requestIndex != -1) {
+                                                    buyerRequests[requestIndex] =
+                                                        request.copy(
+                                                            status = "Declined"
+                                                        )
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Decline")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 // Bottom navigation for the main application sections.
 @Composable
 fun BottomNavigationBar(
@@ -1336,6 +1534,25 @@ fun BottomNavigationBar(
             },
             label = {
                 Text("Browse")
+            }
+        )
+
+        // Buyer requests navigation item.
+        NavigationBarItem(
+            selected = selectedRoute == "requests",
+            onClick = {
+                navController.navigate("requests") {
+                    launchSingleTop = true
+                }
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Requests"
+                )
+            },
+            label = {
+                Text("Requests")
             }
         )
 
