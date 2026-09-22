@@ -28,6 +28,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -175,8 +177,12 @@ val listings = mutableStateListOf(
     )
 )
 
+
 // Stores buyer purchase requests for the current prototype.
 val buyerRequests = mutableStateListOf<BuyerRequest>()
+
+// Stores the IDs of listings saved as favourites.
+val favouriteListingIds = mutableStateListOf<Int>()
 
 
 // Main Android activity and application entry point.
@@ -248,9 +254,14 @@ fun StudentMarketplaceApp() {
             ProfileScreen(navController)
         }
 
-        // Seller request screen - displays purchase requests for listings.
+        // Seller request screen.
         composable("requests") {
             BuyerRequestsScreen(navController)
+        }
+
+        // Favourites screen.
+        composable("favourites") {
+            FavouritesScreen(navController)
         }
     }
 }
@@ -906,12 +917,11 @@ fun ListingCard(
         }
     }
 
+    // Check whether this listing is currently favourited.
+    val isFavourite = favouriteListingIds.contains(listing.id)
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onClick()
-            },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp
@@ -924,128 +934,168 @@ fun ListingCard(
                 .padding(12.dp)
         ) {
 
-            // Display the bundled image first.
-            if (listing.imageRes != null) {
-
-                Image(
-                    painter = painterResource(
-                        id = listing.imageRes
-                    ),
-                    contentDescription = listing.title,
-                    modifier = Modifier
-                        .size(110.dp)
-                        .clip(
-                            RoundedCornerShape(12.dp)
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Display a photo selected by the user.
-            } else if (listingBitmap != null) {
-
-                Image(
-                    bitmap = listingBitmap.asImageBitmap(),
-                    contentDescription = listing.title,
-                    modifier = Modifier
-                        .size(110.dp)
-                        .clip(
-                            RoundedCornerShape(12.dp)
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Fallback when no listing photo is available.
-            } else {
-
-                Box(
-                    modifier = Modifier
-                        .size(110.dp)
-                        .clip(
-                            RoundedCornerShape(12.dp)
-                        )
-                        .background(
-                            MaterialTheme.colorScheme
-                                .secondaryContainer
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-
-                    Text(
-                        text = "No Photo",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            Spacer(
-                modifier = Modifier.width(14.dp)
-            )
-
-            Column(
-                modifier = Modifier.weight(1f)
+            // Make the listing content open the details screen.
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        onClick()
+                    }
             ) {
 
-                Text(
-                    text = listing.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                // Display the bundled image first.
+                if (listing.imageRes != null) {
 
-                if (listing.moduleCode != null) {
-
-                    Spacer(
-                        modifier = Modifier.height(4.dp)
+                    Image(
+                        painter = painterResource(
+                            id = listing.imageRes
+                        ),
+                        contentDescription = listing.title,
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(
+                                RoundedCornerShape(12.dp)
+                            ),
+                        contentScale = ContentScale.Crop
                     )
 
-                    Text(
-                        text = listing.moduleCode,
-                        style = MaterialTheme.typography.bodyMedium
+                    // Display a photo selected by the user.
+                } else if (listingBitmap != null) {
+
+                    Image(
+                        bitmap = listingBitmap.asImageBitmap(),
+                        contentDescription = listing.title,
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(
+                                RoundedCornerShape(12.dp)
+                            ),
+                        contentScale = ContentScale.Crop
                     )
+
+                    // Fallback when no listing photo is available.
+                } else {
+
+                    Box(
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(
+                                RoundedCornerShape(12.dp)
+                            )
+                            .background(
+                                MaterialTheme.colorScheme
+                                    .secondaryContainer
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Text(
+                            text = "No Photo",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
 
                 Spacer(
-                    modifier = Modifier.height(6.dp)
+                    modifier = Modifier.width(14.dp)
                 )
 
-                Text(
-                    text = listing.category,
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
 
                     Text(
-                        text = listing.price,
+                        text = listing.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
+                    if (listing.moduleCode != null) {
+
+                        Spacer(
+                            modifier = Modifier.height(4.dp)
+                        )
+
+                        Text(
+                            text = listing.moduleCode,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
                     Spacer(
-                        modifier = Modifier.width(12.dp)
+                        modifier = Modifier.height(6.dp)
                     )
 
                     Text(
-                        text = listing.condition,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme
-                                    .colorScheme
-                                    .secondaryContainer,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(
-                                horizontal = 8.dp,
-                                vertical = 4.dp
-                            )
+                        text = listing.category,
+                        style = MaterialTheme.typography.bodySmall
                     )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = listing.price,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(
+                            modifier = Modifier.width(12.dp)
+                        )
+
+                        Text(
+                            text = listing.condition,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme
+                                        .colorScheme
+                                        .secondaryContainer,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                )
+                        )
+                    }
                 }
+            }
+
+            // Favourite button for the listing.
+            IconButton(
+                onClick = {
+
+                    if (isFavourite) {
+                        favouriteListingIds.remove(listing.id)
+                    } else {
+                        favouriteListingIds.add(listing.id)
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = if (isFavourite) {
+                        Icons.Default.Favorite
+                    } else {
+                        Icons.Default.FavoriteBorder
+                    },
+                    contentDescription = if (isFavourite) {
+                        "Remove from favourites"
+                    } else {
+                        "Add to favourites"
+                    },
+                    tint = if (isFavourite) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
             }
         }
     }
@@ -1073,6 +1123,9 @@ fun ListingDetailsScreen(
             }.getOrNull()
         }
     }
+
+    // Check whether this listing is currently favourited.
+    val isFavourite = favouriteListingIds.contains(listing.id)
 
     Scaffold(
         bottomBar = {
@@ -1148,11 +1201,48 @@ fun ListingDetailsScreen(
                     modifier = Modifier.height(20.dp)
                 )
 
-                Text(
-                    text = listing.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                // Listing title and favourite button.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = listing.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    IconButton(
+                        onClick = {
+
+                            if (isFavourite) {
+                                favouriteListingIds.remove(listing.id)
+                            } else {
+                                favouriteListingIds.add(listing.id)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isFavourite) {
+                                Icons.Default.Favorite
+                            } else {
+                                Icons.Default.FavoriteBorder
+                            },
+                            contentDescription = if (isFavourite) {
+                                "Remove from favourites"
+                            } else {
+                                "Add to favourites"
+                            },
+                            tint = if (isFavourite) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
+                    }
+                }
 
                 Spacer(
                     modifier = Modifier.height(10.dp)
@@ -1270,54 +1360,6 @@ fun ListingDetailsScreen(
                     Text("Back to Listings")
                 }
             }
-        }
-    }
-}
-
-
-// Profile screen - contains the student's account and settings area.
-@Composable
-fun ProfileScreen(navController: NavController) {
-
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                navController = navController,
-                selectedRoute = "profile"
-            )
-        }
-    ) { paddingValues ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp)
-        ) {
-
-            Text(
-                text = "Profile",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
-            Text(
-                text = "Student Account",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            Text(
-                text = "Settings and account preferences will be added here.",
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }
@@ -1485,6 +1527,132 @@ fun BuyerRequestsScreen(navController: NavController) {
 }
 
 
+// Displays the listings that the student has saved as favourites.
+@Composable
+fun FavouritesScreen(navController: NavController) {
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                selectedRoute = "favourites"
+            )
+        }
+    ) { paddingValues ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp)
+        ) {
+
+            Text(
+                text = "Favourites",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            // Find the listings currently saved as favourites.
+            val favouriteListings = listings.filter {
+                favouriteListingIds.contains(it.id)
+            }
+
+            if (favouriteListings.isEmpty()) {
+
+                // Show a message when there are no saved listings.
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "No favourite listings yet.",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+            } else {
+
+                // Display saved listings.
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    items(
+                        items = favouriteListings,
+                        key = { it.id }
+                    ) { listing ->
+
+                        ListingCard(
+                            listing = listing,
+                            onClick = {
+                                navController.navigate(
+                                    "listing/${listing.id}"
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// Profile screen - contains the student's account and settings area.
+@Composable
+fun ProfileScreen(navController: NavController) {
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                selectedRoute = "profile"
+            )
+        }
+    ) { paddingValues ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(24.dp)
+        ) {
+
+            Text(
+                text = "Profile",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            Text(
+                text = "Student Account",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "Settings and account preferences will be added here.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+
 // Bottom navigation for the main application sections.
 @Composable
 fun BottomNavigationBar(
@@ -1534,6 +1702,25 @@ fun BottomNavigationBar(
             },
             label = {
                 Text("Browse")
+            }
+        )
+
+        // Favourites navigation item.
+        NavigationBarItem(
+            selected = selectedRoute == "favourites",
+            onClick = {
+                navController.navigate("favourites") {
+                    launchSingleTop = true
+                }
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = "Favourites"
+                )
+            },
+            label = {
+                Text("Favourites")
             }
         )
 
