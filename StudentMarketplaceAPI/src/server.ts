@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { testDatabaseConnection } from "./config/database";
 
 // Create the Express application.
 const app = express();
@@ -20,6 +21,13 @@ app.get("/", (_req, res) => {
 // Start the API server.
 const PORT = 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`The Student Marketplace API is running on port ${PORT}.`);
+
+    // Test the connection to the online MySQL database.
+    try {
+        await testDatabaseConnection();
+    } catch (error) {
+        console.error("Failed to connect to the Aiven MySQL database:", error);
+    }
 });
