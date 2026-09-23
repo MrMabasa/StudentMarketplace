@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { testDatabaseConnection } from "./config/database";
+import listingRoutes from "./routes/listingRoutes";
 
 // Create the Express application.
 const app = express();
@@ -17,6 +18,9 @@ app.get("/", (_req, res) => {
         message: "The Student Marketplace API is running."
     });
 });
+
+// Marketplace listing routes.
+app.use("/listings", listingRoutes);
 
 // Start the API server.
 const PORT = 3000;
