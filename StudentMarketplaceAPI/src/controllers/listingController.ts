@@ -31,3 +31,61 @@ export async function getListings(
         });
     }
 }
+
+// Create a new marketplace listing.
+export async function createListing(
+    req: Request,
+    res: Response
+): Promise<void> {
+    try {
+        const {
+            seller_id,
+            title,
+            description,
+            price,
+            condition,
+            module_code
+        } = req.body;
+
+        // Validate the required listing fields.
+        if (
+            seller_id === undefined ||
+            !title ||
+            !description ||
+            price === undefined ||
+            !condition
+        ) {
+            res.status(400).json({
+                message: "Seller, title, description, price and condition are required."
+            });
+            return;
+        }
+
+        const [result] = await database.execute(
+            `INSERT INTO listings
+                (seller_id, title, description, price, \`condition\`, module_code)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                seller_id,
+                title,
+                description,
+                price,
+                condition,
+                module_code || null
+            ]
+        );
+
+        const insertResult = result as { insertId: number };
+
+        res.status(201).json({
+            message: "Listing created successfully.",
+            listing_id: insertResult.insertId
+        });
+    } catch (error) {
+        console.error("Failed to create listing:", error);
+
+        res.status(500).json({
+            message: "Failed to create listing."
+        });
+    }
+}
