@@ -47,7 +47,6 @@ export async function createListing(
             module_code
         } = req.body;
 
-        // Validate the required listing fields.
         if (
             seller_id === undefined ||
             !title ||
@@ -99,7 +98,6 @@ export async function getListingById(
     try {
         const listingId = Number(req.params.id);
 
-        // Validate the listing ID.
         if (!Number.isInteger(listingId) || listingId <= 0) {
             res.status(400).json({
                 message: "A valid listing ID is required."
@@ -135,7 +133,6 @@ export async function getListingById(
             date_created: Date;
         }>;
 
-        // Return 404 if the listing does not exist.
         if (listings.length === 0) {
             res.status(404).json({
                 message: "Listing not found."
@@ -231,6 +228,50 @@ export async function updateListing(
 
         res.status(500).json({
             message: "Failed to update listing."
+        });
+    }
+}
+
+// Delete an existing marketplace listing.
+export async function deleteListing(
+    req: Request,
+    res: Response
+): Promise<void> {
+    try {
+        const listingId = Number(req.params.id);
+
+        // Validate the listing ID.
+        if (!Number.isInteger(listingId) || listingId <= 0) {
+            res.status(400).json({
+                message: "A valid listing ID is required."
+            });
+            return;
+        }
+
+        const [result] = await database.execute(
+            `DELETE FROM listings
+             WHERE listing_id = ?`,
+            [listingId]
+        );
+
+        const deleteResult = result as { affectedRows: number };
+
+        // Return 404 if the listing does not exist.
+        if (deleteResult.affectedRows === 0) {
+            res.status(404).json({
+                message: "Listing not found."
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: "Listing deleted successfully."
+        });
+    } catch (error) {
+        console.error("Failed to delete listing:", error);
+
+        res.status(500).json({
+            message: "Failed to delete listing."
         });
     }
 }

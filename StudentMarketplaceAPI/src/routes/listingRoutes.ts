@@ -3,7 +3,8 @@ import {
     getListings,
     getListingById,
     createListing,
-    updateListing
+    updateListing,
+    deleteListing
 } from "../controllers/listingController";
 
 // Create the listings router.
@@ -20,5 +21,8 @@ router.post("/", createListing);
 
 // PUT /listings/:id - update an existing marketplace listing.
 router.put("/:id", updateListing);
+
+// DELETE /listings/:id - delete an existing marketplace listing.
+router.delete("/:id", deleteListing);
 
 export default router;
