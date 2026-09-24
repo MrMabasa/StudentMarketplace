@@ -15,6 +15,7 @@ export async function getListings(
                 description,
                 price,
                 \`condition\`,
+                category,
                 module_code,
                 status,
                 date_created
@@ -44,6 +45,7 @@ export async function createListing(
             description,
             price,
             condition,
+            category,
             module_code
         } = req.body;
 
@@ -52,25 +54,35 @@ export async function createListing(
             !title ||
             !description ||
             price === undefined ||
-            !condition
+            !condition ||
+            !category
         ) {
             res.status(400).json({
                 message:
-                    "Seller, title, description, price and condition are required."
+                    "Seller, title, description, price, condition and category are required."
             });
             return;
         }
 
         const [result] = await database.execute(
             `INSERT INTO listings
-                (seller_id, title, description, price, \`condition\`, module_code)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+                (
+                    seller_id,
+                    title,
+                    description,
+                    price,
+                    \`condition\`,
+                    category,
+                    module_code
+                )
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 seller_id,
                 title,
                 description,
                 price,
                 condition,
+                category,
                 module_code || null
             ]
         );
@@ -113,6 +125,7 @@ export async function getListingById(
                 description,
                 price,
                 \`condition\`,
+                category,
                 module_code,
                 status,
                 date_created
@@ -128,6 +141,7 @@ export async function getListingById(
             description: string;
             price: number;
             condition: string;
+            category: string;
             module_code: string | null;
             status: string;
             date_created: Date;
@@ -171,6 +185,7 @@ export async function updateListing(
             description,
             price,
             condition,
+            category,
             module_code,
             status
         } = req.body;
@@ -180,11 +195,12 @@ export async function updateListing(
             !title ||
             !description ||
             price === undefined ||
-            !condition
+            !condition ||
+            !category
         ) {
             res.status(400).json({
                 message:
-                    "Title, description, price and condition are required."
+                    "Title, description, price, condition and category are required."
             });
             return;
         }
@@ -196,6 +212,7 @@ export async function updateListing(
                 description = ?,
                 price = ?,
                 \`condition\` = ?,
+                category = ?,
                 module_code = ?,
                 status = ?
              WHERE listing_id = ?`,
@@ -204,6 +221,7 @@ export async function updateListing(
                 description,
                 price,
                 condition,
+                category,
                 module_code || null,
                 status || "Active",
                 listingId

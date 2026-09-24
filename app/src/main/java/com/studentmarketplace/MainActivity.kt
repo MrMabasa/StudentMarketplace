@@ -7,6 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.studentmarketplace.viewmodel.ListingViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -746,13 +750,19 @@ fun CreateListingScreen(navController: NavController) {
 @Composable
 fun BrowseListingsScreen(navController: NavController) {
 
+    val viewModel: ListingViewModel = viewModel()
+    LaunchedEffect(Unit) {
+        viewModel.loadListings()
+    }
+
     var searchText by remember {
         mutableStateOf("")
     }
 
-    // Filter listings based on title, description or module code.
-    val filteredListings = listings.filter { listing ->
+    val apiListings by viewModel.listings.collectAsState()
 
+    // Filter listings based on title, description or module code.
+    val filteredListings = apiListings.map { it.toListing() }.filter { listing ->
         val query = searchText.trim()
 
         if (query.isEmpty()) {

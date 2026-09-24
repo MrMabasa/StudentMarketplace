@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS listings (
     description TEXT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     `condition` VARCHAR(100) NOT NULL,
+    category VARCHAR(100) NOT NULL,
     module_code VARCHAR(100),
     status VARCHAR(50) NOT NULL DEFAULT 'Active',
     date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
