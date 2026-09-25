@@ -224,6 +224,7 @@ fun StudentMarketplaceApp() {
                 },
                 onRegisterClick = {
                     // Registration screen will be added next.
+                    navController.navigate("register")
                 },
                 onGoogleSignInClick = {
                     // Google Sign-In will be connected later.
@@ -234,6 +235,21 @@ fun StudentMarketplaceApp() {
         composable("signIn") {
             SignInScreen(
                 onSignInSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("welcome") {
+                            inclusive = true
+                        }
+                    }
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("register") {
+            RegisterScreen(
+                onRegisterSuccess = { studentNumber ->
                     navController.navigate("home") {
                         popUpTo("welcome") {
                             inclusive = true
