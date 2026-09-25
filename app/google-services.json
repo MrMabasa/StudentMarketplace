@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "880762677220",
+    "project_id": "the-student-marketplace-4f0a1",
+    "storage_bucket": "the-student-marketplace-4f0a1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880762677220:android:3590f8f02acf96cd1a89f1",
+        "android_client_info": {
+          "package_name": "com.studentmarketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLQBGw4GE9u-QkT-1HzJeFnlTrXZe-O68"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

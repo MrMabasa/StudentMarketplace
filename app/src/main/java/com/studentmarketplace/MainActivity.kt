@@ -214,8 +214,37 @@ fun StudentMarketplaceApp() {
     // Define the application's available screens/routes.
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "welcome"
     ) {
+
+        composable("welcome") {
+            WelcomeScreen(
+                onSignInClick = {
+                    navController.navigate("signIn")
+                },
+                onRegisterClick = {
+                    // Registration screen will be added next.
+                },
+                onGoogleSignInClick = {
+                    // Google Sign-In will be connected later.
+                }
+            )
+        }
+
+        composable("signIn") {
+            SignInScreen(
+                onSignInSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("welcome") {
+                            inclusive = true
+                        }
+                    }
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
 
         // Home screen.
         composable("home") {
