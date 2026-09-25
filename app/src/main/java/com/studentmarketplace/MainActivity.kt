@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.studentmarketplace.viewmodel.ListingViewModel
+import com.studentmarketplace.data.model.CreateListingRequest
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,6 +84,7 @@ data class Listing(
     val imageRes: Int? = null,
     val imageUri: String? = null
 )
+
 
 // Represents a buyer's request to purchase a listing.
 data class BuyerRequest(
@@ -388,6 +390,24 @@ fun HomeScreen(navController: NavController) {
 // Create Listing screen - allows a student to create a listing.
 @Composable
 fun CreateListingScreen(navController: NavController) {
+
+    val viewModel: ListingViewModel = viewModel()
+
+    val isLoading by viewModel.isLoading.collectAsState()
+    val createSuccess by viewModel.createSuccess.collectAsState()
+    val apiErrorMessage by viewModel.errorMessage.collectAsState()
+
+    LaunchedEffect(createSuccess) {
+        if (createSuccess) {
+            viewModel.resetCreateSuccess()
+
+            navController.navigate("browse") {
+                popUpTo("createListing") {
+                    inclusive = true
+                }
+            }
+        }
+    }
 
     var title by remember {
         mutableStateOf("")
@@ -699,6 +719,20 @@ fun CreateListingScreen(navController: NavController) {
                 )
             }
 
+            // Display API errors without crashing the app.
+            if (apiErrorMessage != null) {
+
+                Text(
+                    text = apiErrorMessage ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
+
             // Validate and save the new listing.
             Button(
                 onClick = {
@@ -734,39 +768,32 @@ fun CreateListingScreen(navController: NavController) {
 
                         else -> {
 
-                            // Generate the next available local listing ID.
-                            val newId =
-                                (listings.maxOfOrNull { it.id } ?: 0) + 1
-
-                            // Add the new listing to the local marketplace list.
-                            listings.add(
-                                Listing(
-                                    id = newId,
-                                    title = title.trim(),
-                                    moduleCode = moduleCode
-                                        .trim()
-                                        .ifBlank { null },
-                                    price = "R${price.trim()}",
-                                    condition = condition,
-                                    category = category,
-                                    description = description.trim(),
-                                    imageRes = null,
-                                    imageUri = selectedImageUri?.toString()
-                                )
+                            val request = CreateListingRequest(
+                                seller_id = 1,
+                                title = title.trim(),
+                                description = description.trim(),
+                                price = price.trim().toDouble(),
+                                condition = condition,
+                                category = category,
+                                module_code = moduleCode
+                                    .trim()
+                                    .ifBlank { null }
                             )
 
-                            // Return to the marketplace after saving.
-                            navController.navigate("browse") {
-                                popUpTo("createListing") {
-                                    inclusive = true
-                                }
-                            }
+                            viewModel.createListing(request)
                         }
                     }
                 },
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Save Listing")
+                Text(
+                    if (isLoading) {
+                        "Saving..."
+                    } else {
+                        "Save Listing"
+                    }
+                )
             }
 
             Spacer(
@@ -778,6 +805,7 @@ fun CreateListingScreen(navController: NavController) {
                 onClick = {
                     navController.popBackStack()
                 },
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Cancel")
@@ -796,6 +824,7 @@ fun CreateListingScreen(navController: NavController) {
 fun BrowseListingsScreen(navController: NavController) {
 
     val viewModel: ListingViewModel = viewModel()
+
     LaunchedEffect(Unit) {
         viewModel.loadListings()
     }
@@ -807,29 +836,32 @@ fun BrowseListingsScreen(navController: NavController) {
     val apiListings by viewModel.listings.collectAsState()
 
     // Filter listings based on title, description or module code.
-    val filteredListings = apiListings.map { it.toListing() }.filter { listing ->
-        val query = searchText.trim()
+    val filteredListings = apiListings
+        .map { it.toListing() }
+        .filter { listing ->
 
-        if (query.isEmpty()) {
-            true
-        } else {
+            val query = searchText.trim()
 
-            listing.title.contains(
-                query,
-                ignoreCase = true
-            ) ||
+            if (query.isEmpty()) {
+                true
+            } else {
 
-                    listing.description.contains(
-                        query,
-                        ignoreCase = true
-                    ) ||
+                listing.title.contains(
+                    query,
+                    ignoreCase = true
+                ) ||
 
-                    listing.moduleCode?.contains(
-                        query,
-                        ignoreCase = true
-                    ) == true
+                        listing.description.contains(
+                            query,
+                            ignoreCase = true
+                        ) ||
+
+                        listing.moduleCode?.contains(
+                            query,
+                            ignoreCase = true
+                        ) == true
+            }
         }
-    }
 
     Scaffold(
         bottomBar = {
